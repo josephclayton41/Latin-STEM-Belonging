@@ -1,5 +1,5 @@
 ---
-title: 'A Quantitative Examination of Belonging in Latinx STEM Students: Community,
+title: 'A Quantitative Examination of Belonging in Latine STEM Students: Community,
   Recognition, and Validation as Predictors'
 author: "Joseph Clayton"
 output: html_document
@@ -21,15 +21,15 @@ library(knitr)
 
 
 # Abstract
-Sense of belonging is a crucial aspect of student success for Latinx college students. Particularly, Latinx college students in STEM navigate a space that often marginalizes and excludes them through a lack of faculty representation, student support programming, and representation within the curriculum. This project aims to determine how key student experiences are able to predict a student’s sense of belonging within a STEM educational setting.
+Sense of belonging is a crucial aspect of student success for Latine college students. Particularly, Latine college students in STEM navigate a space that often marginalizes and excludes them through a lack of faculty representation, student support programming, and representation within the curriculum. This project aims to determine how key student experiences are able to predict a student’s sense of belonging within a STEM educational setting.
 
 Survey data were collected from over 450 participating students at a two-year Hispanic-Serving Institution (HSI).  To determine a student’s belonging, we used the question: “I am part of the STEM community at [my two-year college]?” Then, five additional survey items, selected for their alignment with the concepts of community, recognition, and validation, were used as predictors. These questions reflected how connected students feel to other students on campus, how their parents affected their college career, how valued they felt by instructors, and whether they spent time on campus outside of class. Multiple linear regression was then used to determine how strong of a predictor each survey item was.
 
-This study aims to identify which aspects of a student’s experience most strongly influence their sense of STEM belonging. Rather than focusing on purely academic aspects, this study focuses on the affective aspects of being a Latinx STEM student. The hope is that by highlighting the importance of community, recognition, and validation, this research contributes to an understanding of how HSIs can contribute towards more inclusive and welcoming STEM environments for Latinx students.
+This study aims to identify which aspects of a student’s experience most strongly influence their sense of STEM belonging. Rather than focusing on purely academic aspects, this study focuses on the affective aspects of being a Latine STEM student. The hope is that by highlighting the importance of community, recognition, and validation, this research contributes to an understanding of how HSIs can contribute towards more inclusive and welcoming STEM environments for Latine students.
 
 ## Data Preparation
 
-We begin by loading and filtering the `CCSI v5` data to only include responses from students who self identified as Hispanic/Latinx. Additionally we selected a subset of survey items which related to the key constructs of community, recognition, and validation.
+We begin by loading and filtering the `CCSI v5` data to only include responses from students who self identified as Hispanic/Latine. Additionally we selected a subset of survey items which related to the key constructs of community, recognition, and validation.
 
 ```{r Data, message= FALSE}
 CCSI_og_data <- read_csv('Data/CCSI v5 student analysis.csv')
@@ -164,7 +164,7 @@ To assess multicollinearity among the independent variables, Pearson correlation
 
 ## Regression Analysis
 
-We can now run a multiple linear regression to examine how five affective variables predict our dependent variable determining Latinx STEM student belonging, **"I am part of the STEM community at [my two-year college]?"** (`nuQ9_1`).
+We can now run a multiple linear regression to examine how five affective variables predict our dependent variable determining Latine STEM student belonging, **"I am part of the STEM community at [my two-year college]?"** (`nuQ9_1`).
 
 ```{r Belonging_model, include = TRUE}
 #Run multiple linaer regression
@@ -177,7 +177,7 @@ model_coeffs <- tidy(belonging_model, conf.int = TRUE)
 model_summary <- glance(belonging_model)
 ```
 
-Our model was statistically significant, F(`r model_summary$df`, `r model_summary$df.residual`) = `r round(model_summary$statistic, 2)`, p < `r signif(model_summary$p.value, 3)`. The model explained approximately `r round(model_summary$adj.r.squared * 100, 1)`% of the variance in Latinx students' sense of STEM belonging.
+Our model was statistically significant, F(`r model_summary$df`, `r model_summary$df.residual`) = `r round(model_summary$statistic, 2)`, p < `r signif(model_summary$p.value, 3)`. The model explained approximately `r round(model_summary$adj.r.squared * 100, 1)`% of the variance in Latine students' sense of STEM belonging.
 
 ```{r Coefficient_Plot, include = TRUE}
 #Remove the intercept
@@ -202,13 +202,13 @@ print(coeff_plot)
 
 ## Results
 
-The results of the multiple linear regression indicate that not all variables had a statistically significant effect on Latinx STEM students' sense of belonging in educational settings. Specifically **"I spend time on campus outside of class" (nuQ3_2)** and **"I have conversations about STEM subjects with my friends and family" (nuQ5_5)** were both **positive and statistically significant** predictors of belonging **(p<.001)**. This indicates that informal engagement with STEM contribute meaningfully to students' belonging in the STEM community. 
+The results of the multiple linear regression indicate that not all variables had a statistically significant effect on Latine STEM students' sense of belonging in educational settings. Specifically **"I spend time on campus outside of class" (nuQ3_2)** and **"I have conversations about STEM subjects with my friends and family" (nuQ5_5)** were both **positive and statistically significant** predictors of belonging **(p<.001)**. This indicates that informal engagement with STEM contribute meaningfully to students' belonging in the STEM community. 
 
 However, variables such as **“Instructors value my scholarly thoughts” (nuQ7_4)** and **“Instructors understand my challenges as a student” (nuQ4_1)**. Although these items align with **recognition** their lack of predicitve power could be due to inconsistent faculty-student interactions, low response variablity, or underreporting.
 
 **“My parent's preferences matter in choosing a STEM career” (nuQ10_4)** had a small, positive, but statistically insignificant effect, which could suggest that familial influence, and to a larger degree validation, may play a small role that warrants further exploration.
 
-Overall, the model accounted for `r round(model_summary$adj.r.squared * 100, 1)`% of the variance in Latinx students' sense of STEM belonging. While modest, this value is meaningful due to the complicated nature of belonging as a construct. This reinforces the idea that non-academic aspects of the student experience are crucial to fostering inclusion in STEM, especially for Latinx students within higher education.
+Overall, the model accounted for `r round(model_summary$adj.r.squared * 100, 1)`% of the variance in Latine students' sense of STEM belonging. While modest, this value is meaningful due to the complicated nature of belonging as a construct. This reinforces the idea that non-academic aspects of the student experience are crucial to fostering inclusion in STEM, especially for Latine students within higher education.
 
 ## Limitations
 
@@ -220,9 +220,9 @@ Second, all survey data was self-reported. This can introduce bias, as students 
 
 Third, the model only included five predictor variables were used under the categories of **community, recognition, and validation**. More predictor variables under these categories would lead to a more accurate model. 
 
-Lastly, the research was only conducted at a single two-year HSI, which can limit the accuracy of the model. While focus on Latinx STEM students at HSIs is a strength of the research, experiences may differ at other institutions, four-year universities, predominantly white institutions (PWIs), or institutions in other geogrophical/cultural context.
+Lastly, the research was only conducted at a single two-year HSI, which can limit the accuracy of the model. While focus on Latine STEM students at HSIs is a strength of the research, experiences may differ at other institutions, four-year universities, predominantly white institutions (PWIs), or institutions in other geogrophical/cultural context.
 
-These limitations highlight the need for more expansive, comprehensive research which utilizes longitudinal and mixed-method studies to fully capture how belonging develops and how institutions can better support Latinx students in STEM.     
+These limitations highlight the need for more expansive, comprehensive research which utilizes longitudinal and mixed-method studies to fully capture how belonging develops and how institutions can better support Latine students in STEM.     
 
 ## Future Research
 
