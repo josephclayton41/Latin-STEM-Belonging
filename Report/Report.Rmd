@@ -1,0 +1,232 @@
+---
+title: 'A Quantitative Examination of Belonging in Latinx STEM Students: Community,
+  Recognition, and Validation as Predictors'
+author: "Joseph Clayton"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r Library, include= FALSE, message= FALSE}
+#Load R Libraries
+library(readr) #read data
+library(dplyr) #filtering
+library(tidyr) #cleaning
+library(ggplot2) #plotting
+library(broom) #extract and report model results
+library(knitr)
+```
+
+
+# Abstract
+Sense of belonging is a crucial aspect of student success for Latinx college students. Particularly, Latinx college students in STEM navigate a space that often marginalizes and excludes them through a lack of faculty representation, student support programming, and representation within the curriculum. This project aims to determine how key student experiences are able to predict a student’s sense of belonging within a STEM educational setting.
+
+Survey data were collected from over 450 participating students at a two-year Hispanic-Serving Institution (HSI).  To determine a student’s belonging, we used the question: “I am part of the STEM community at [my two-year college]?” Then, five additional survey items, selected for their alignment with the concepts of community, recognition, and validation, were used as predictors. These questions reflected how connected students feel to other students on campus, how their parents affected their college career, how valued they felt by instructors, and whether they spent time on campus outside of class. Multiple linear regression was then used to determine how strong of a predictor each survey item was.
+
+This study aims to identify which aspects of a student’s experience most strongly influence their sense of STEM belonging. Rather than focusing on purely academic aspects, this study focuses on the affective aspects of being a Latinx STEM student. The hope is that by highlighting the importance of community, recognition, and validation, this research contributes to an understanding of how HSIs can contribute towards more inclusive and welcoming STEM environments for Latinx students.
+
+## Data Preparation
+
+We begin by loading and filtering the `CCSI v5` data to only include responses from students who self identified as Hispanic/Latinx. Additionally we selected a subset of survey items which related to the key constructs of community, recognition, and validation.
+
+```{r Data, message= FALSE}
+CCSI_og_data <- read_csv('Data/CCSI v5 student analysis.csv')
+
+#Filter to only keep relevant data
+cleaned_data <- CCSI_og_data %>%
+  filter(Ethnicity == "Hispanic / Latino") %>%
+  select(nuQ3_2, nuQ4_1, nuQ5_5, nuQ7_4, nuQ9_1,
+         nuQ10_4, Ethnicity)
+```
+
+## Visualizing Survey Responses
+
+Prior to conducting statistical analysis, we visualize the distribution of responses to each selected survey item. These items, originally coded as variables, have been recoded to reflect the provided question.
+
+Survey responses were recorded using a 6-point Likert scale which ranged from Strongly Disagree to Strongly Agree. We mapped these numeric responses to their corresponding label and plotted the frequency distribution of each one. These Plots serve to help us understand the shape and how participants responded. Each plot below corresponds to a single survey item. 
+
+```{r Question_map, echo = FALSE, message= FALSE}
+question_map <- c(
+  "nuQ3_2" = "I spend time on campus outside of class",
+  "nuQ4_1" = "Instructors don't understand my challenges as a student",
+  "nuQ5_5" = "I have conversations about STEM subjects with my friends and family",
+  "nuQ7_4" = "Instructors value my scholarly thoughts",
+  "nuQ10_4" = "My parent's preferences matter in choosing a STEM career",
+  "nuQ9_1" = "I am part of the STEM community at [my two-year college]"
+)  
+response_map <- c(
+  "1" = "Strongly Disagree",
+  "2" = "Disagree",
+  "3" = "Somewhat Disagree",
+  "4" = "Somewhat Agree",
+  "5" = "Agree",
+  "6" = "Strongly Agree"
+)
+question_order <- c(
+  "I spend time on campus outside of class",
+  "Instructors don't understand my challenges as a student",
+  "I have conversations about STEM subjects with my friends and family",
+  "Instructors value my scholarly thoughts",
+  "My parent's preferences matter in choosing a STEM career",
+  "I am part of the STEM community at [my two-year college]"
+)
+```
+
+```{r Variable_name_table, echo = FALSE}
+variable_names <- data.frame(
+  Code = names(question_map),
+  Description = unname(question_map),
+  Category = c("Community", "Validation", "Community", "Recognition", "Validation", "Belonging"),
+  Likert_Scale = rep("1 = Strongly Disagree ... 6 = Strongly Agree", 6)
+)
+kable(variable_names, caption = "Survey Variables Used in Analysis")
+```
+
+```{r Plots_folder, include=FALSE}
+if (!dir.exists("Plots")) dir.create("Plots")
+```
+
+```{r Survey_response_plots, echo = FALSE}
+#Creates subset of only relevant questions and maps the question number to the actual question
+CCSI_subset <- pivot_longer(cleaned_data[,1:6], cols = everything(), names_to = 'Question',
+             values_to = 'Response')
+CCSI_subset$Question <- question_map[CCSI_subset$Question]
+CCSI_subset$Response <- as.character(CCSI_subset$Response)
+CCSI_subset$Response <- response_map[CCSI_subset$Response]
+CCSI_subset <- filter(CCSI_subset, !is.na(Response))
+CCSI_subset$Response <- factor(CCSI_subset$Response,
+  levels = c("Strongly Disagree", "Disagree", "Somewhat Disagree",
+             "Somewhat Agree", "Agree", "Strongly Agree"),
+  ordered = TRUE)
+
+#Plots questions and their responses
+for (q in question_order) {
+  data_q <- filter(CCSI_subset, Question == q)
+  response_count <- nrow(data_q)
+  
+  plot_q <- ggplot(data_q, aes(x = Response, fill = Response)) +
+    geom_bar() + 
+    ggtitle(q, subtitle = paste("Total Responses:", response_count)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+  #Creates safe file name and saves the plot to 'Plots' folder
+  filename <- paste0("Plots/", gsub("[^a-zA-Z0-9]", "_", q), ".png")
+  ggsave(filename, plot = plot_q, width = 8, height = 5, dpi = 300)
+  print(plot_q)
+}
+
+```
+
+## Multicollinearity 
+
+Firstly since **"Instructors don't understand my challenges as a student"** (`nuQ4_1`) is negatively phrased, we want to reverse code it so that higher values indicate higher validation to align with the other survey items.
+```{r Reverse_code, include = TRUE, message = FALSE}
+#Reverse coding nuQ4_1
+cleaned_data$nuQ4_1 <- 7 - cleaned_data$nuQ4_1
+```
+
+Now that all the survey items are consistent in their agreement and validation we then want to check for multicollinearity and ensure that no predictors are highly collinear and therefore throwing off our coefficient estimates
+
+```{r Multicollinearity, include = TRUE, message = FALSE}
+#Check for multicollinearity
+cor(cleaned_data[, c("nuQ3_2", "nuQ4_1", "nuQ5_5", "nuQ7_4", "nuQ10_4")],
+    use = "pairwise.complete.obs", method = "pearson")
+```
+
+```{r corr_plot, echo = FALSE}
+# Select only predictor columns
+predictor_vars <- cleaned_data %>%
+  select(nuQ3_2, nuQ4_1, nuQ5_5, nuQ7_4, nuQ10_4)
+
+# Compute correlation matrix and check for multicollinearity
+cor_matrix <- cor(cleaned_data[, c("nuQ3_2", "nuQ4_1", "nuQ5_5", "nuQ7_4", "nuQ10_4")],
+                  use = "pairwise.complete.obs", method = "pearson")
+
+# Convert to long format
+cor_df <- as.data.frame(as.table(cor_matrix))
+colnames(cor_df) <- c("Var1", "Var2", "Correlation")  
+
+# Plot correlation heatmap
+corr_plot <- ggplot(cor_df, aes(x = Var1, y = Var2, fill = Correlation)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(Correlation, 2)), size = 4) +
+  scale_fill_gradient2(low = "red", high = "blue", mid = "white",
+                       midpoint = 0, limit = c(-1, 1), name = "Correlation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Correlation Matrix of Predictors", x = NULL, y = NULL)
+ggsave("Plots/corr_plot.png", width = 8, height = 5, dpi = 300)
+print(corr_plot)
+```
+
+To assess multicollinearity among the independent variables, Pearson correlation coefficients were calculated for all the predictors which will be used in the regression model. The correlations ranged from **-0.08** to **0.37**. As a general rule of thumb, anything below **0.40** is considered weak with anything below **0.20** being very weak. The strongest observed correlations were between `nuQ4_1` and `nuQ7_4` which gave a Pearson coefficient of **r = 0.37** and between `nuQ5_5` and `nuQ7_4` which gave a Pearson coefficeint of **r = 0.26**, indicating a weak correlation for both. All other variable pairs demonstrated very weak correlations **(r < 0.20)** which suggests that multicollinearity is neglible and the predictors are sufficiently distinct for inclusion in the regression model.
+
+## Regression Analysis
+
+We can now run a multiple linear regression to examine how five affective variables predict our dependent variable determining Latinx STEM student belonging, **"I am part of the STEM community at [my two-year college]?"** (`nuQ9_1`).
+
+```{r Belonging_model, include = TRUE}
+#Run multiple linaer regression
+belonging_model <- lm(nuQ9_1 ~ nuQ3_2 + nuQ4_1 + nuQ5_5 + nuQ7_4 + nuQ10_4,
+                      data = cleaned_data)
+summary(belonging_model)
+
+#Extract stats
+model_coeffs <- tidy(belonging_model, conf.int = TRUE)
+model_summary <- glance(belonging_model)
+```
+
+Our model was statistically significant, F(`r model_summary$df`, `r model_summary$df.residual`) = `r round(model_summary$statistic, 2)`, p < `r signif(model_summary$p.value, 3)`. The model explained approximately `r round(model_summary$adj.r.squared * 100, 1)`% of the variance in Latinx students' sense of STEM belonging.
+
+```{r Coefficient_Plot, include = TRUE}
+#Remove the intercept
+model_coeffs <- filter(model_coeffs, term != "(Intercept)")
+
+#Creating the plot
+coeff_plot <- ggplot(model_coeffs, aes(x = estimate, y = reorder(term, estimate))) +
+  geom_point(size = 3) +
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
+  labs(
+    title = "Regression Coefficients (with 95% CI)",
+    x = "Estimate (β)",
+    y = "Predictor"
+  ) +
+  theme_minimal()
+
+#Save plot to files
+ggsave("Plots/belonging_coefficients.png", width = 8, height = 5, dpi = 300)
+print(coeff_plot)
+```
+
+## Results
+
+The results of the multiple linear regression indicate that not all variables had a statistically significant effect on Latinx STEM students' sense of belonging in educational settings. Specifically **"I spend time on campus outside of class" (nuQ3_2)** and **"I have conversations about STEM subjects with my friends and family" (nuQ5_5)** were both **positive and statistically significant** predictors of belonging **(p<.001)**. This indicates that informal engagement with STEM contribute meaningfully to students' belonging in the STEM community. 
+
+However, variables such as **“Instructors value my scholarly thoughts” (nuQ7_4)** and **“Instructors understand my challenges as a student” (nuQ4_1)**. Although these items align with **recognition** their lack of predicitve power could be due to inconsistent faculty-student interactions, low response variablity, or underreporting.
+
+**“My parent's preferences matter in choosing a STEM career” (nuQ10_4)** had a small, positive, but statistically insignificant effect, which could suggest that familial influence, and to a larger degree validation, may play a small role that warrants further exploration.
+
+Overall, the model accounted for `r round(model_summary$adj.r.squared * 100, 1)`% of the variance in Latinx students' sense of STEM belonging. While modest, this value is meaningful due to the complicated nature of belonging as a construct. This reinforces the idea that non-academic aspects of the student experience are crucial to fostering inclusion in STEM, especially for Latinx students within higher education.
+
+## Limitations
+
+Several limitations must be acknowledged.
+
+Firstly, the data was cross-sectional meaning all responses were collected at a single point in time, which allows for identification of association between variable but does not support causal inference. 
+
+Second, all survey data was self-reported. This can introduce bias, as students may underreport negative experiences or overreport positive experiences. Additionally misunderstanding of survey items can lead to inaccurate responses. These factors can weaken the reliability of the predictors and reduce the model's ability to detect true associations. 
+
+Third, the model only included five predictor variables were used under the categories of **community, recognition, and validation**. More predictor variables under these categories would lead to a more accurate model. 
+
+Lastly, the research was only conducted at a single two-year HSI, which can limit the accuracy of the model. While focus on Latinx STEM students at HSIs is a strength of the research, experiences may differ at other institutions, four-year universities, predominantly white institutions (PWIs), or institutions in other geogrophical/cultural context.
+
+These limitations highlight the need for more expansive, comprehensive research which utilizes longitudinal and mixed-method studies to fully capture how belonging develops and how institutions can better support Latinx students in STEM.     
+
+## Future Research
+
+Future work should incorporate a larger set of predictors and use longitudinal designs to capture change over time, as a students' sense of belonging can change as they continue in higher education. Including qualitative responses can enhance the understanding of how community and identity interact in STEM environments.
+
+## Conclusion
+

@@ -1,0 +1,17 @@
+# Exclude sensitive data
+Data/
+*.csv
+
+# RStudio and knitting temp files
+.Rhistory
+.RData
+.Rproj.user/
+*.utf8.md
+*.knit.md
+*.nb.html
+
+# System files
+.DS_Store
+
+# Optional: plots (if they're regenerated in code)
+# Plots/
